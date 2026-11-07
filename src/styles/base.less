@@ -1,0 +1,404 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font: 14px/1.5 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--dw-text);
+  background: var(--dw-bg);
+  min-width: 1180px;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c9d4e4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---------- 通用卡片 ---------- */
+.dw-card {
+  background: #fff;
+  border: 1px solid var(--dw-border);
+  border-radius: var(--dw-radius);
+  box-shadow: var(--dw-shadow);
+}
+
+.dw-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--dw-text);
+  margin-bottom: 12px;
+}
+
+.dw-card__title .more {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dw-primary);
+  cursor: pointer;
+}
+
+.dw-link {
+  color: var(--dw-primary);
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.dw-link + .dw-link {
+  margin-left: 12px;
+}
+
+.dw-link.danger {
+  color: var(--dw-danger);
+}
+
+.dw-link:hover {
+  opacity: 0.8;
+}
+
+.dw-muted {
+  color: var(--dw-text-3);
+}
+
+.dw-sub {
+  color: var(--dw-text-3);
+  font-size: 12px;
+}
+
+/* ---------- 页头 ---------- */
+.dw-page-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  margin-bottom: 14px;
+}
+
+.dw-page-head__title {
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.dw-page-head__sub {
+  font-size: 12px;
+  color: var(--dw-text-3);
+  white-space: nowrap;
+}
+
+.dw-page-head__right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---------- 网格布局 ---------- */
+.dw-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.dw-row {
+  display: flex;
+  gap: 14px;
+}
+
+.dw-mt {
+  margin-top: 14px;
+}
+
+/* ---------- 页签 ---------- */
+.dw-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--dw-border);
+}
+
+.dw-tabs--plain {
+  border-bottom: none;
+}
+
+.dw-tab {
+  position: relative;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: var(--dw-text-2);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  border-radius: 6px 6px 0 0;
+}
+
+.dw-tab:hover {
+  color: var(--dw-primary);
+}
+
+.dw-tab.is-active {
+  color: var(--dw-primary);
+  font-weight: 600;
+}
+
+.dw-tabs:not(.dw-tabs--plain) .dw-tab.is-active::after {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--dw-primary);
+}
+
+.dw-tabs--plain .dw-tab {
+  border-radius: 5px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: 1px solid #d5deeb;
+  background: #fff;
+}
+
+.dw-tabs--plain .dw-tab.is-active {
+  background: var(--dw-primary);
+  border-color: var(--dw-primary);
+  color: #fff;
+}
+
+/* ---------- 空态 ---------- */
+.dw-empty {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--dw-text-3);
+  font-size: 13px;
+}
+
+/* ---------- 树 ---------- */
+.dw-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding-right: 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  color: var(--dw-text);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dw-tree-row:hover {
+  background: #f6f9ff;
+}
+
+.dw-tree-row.is-active {
+  color: var(--dw-primary);
+  background: var(--dw-primary-soft);
+  font-weight: 600;
+}
+
+.dw-tree-row .count {
+  color: var(--dw-text-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.dw-tree-row .caret {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8a97a8;
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+
+.dw-tree-row .caret.is-open {
+  transform: rotate(90deg);
+}
+
+.dw-tree-row .folder {
+  color: #7ba7f7;
+}
+
+.dw-tree-row .leaf-ico {
+  color: #7ba7f7;
+}
+
+.dw-tree-row .tail {
+  margin-left: auto;
+  color: var(--dw-text-3);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+/* ---------- 统计卡 ---------- */
+.dw-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.dw-stat__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dw-stat__icon.blue {
+  background: #e8f0ff;
+  color: var(--dw-primary);
+}
+
+.dw-stat__icon.cyan {
+  background: #e3f5f9;
+  color: var(--dw-cyan);
+}
+
+.dw-stat__icon.green {
+  background: #e6f7ee;
+  color: var(--dw-success);
+}
+
+.dw-stat__icon.orange {
+  background: #fff3e0;
+  color: var(--dw-warning);
+}
+
+.dw-stat__icon.red {
+  background: #fde9e9;
+  color: var(--dw-danger);
+}
+
+.dw-stat__label {
+  font-size: 12px;
+  color: var(--dw-text-2);
+}
+
+.dw-stat__num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.dw-stat__delta {
+  font-size: 11px;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.dw-stat__delta .up {
+  color: var(--dw-danger);
+}
+
+.dw-stat__delta .down {
+  color: var(--dw-success);
+}
+
+.dw-stat__delta .flat {
+  color: var(--dw-text-3);
+}
+
+/* ---------- 工具 ---------- */
+.dw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dw-toolbar .grow {
+  flex: 1;
+  min-width: 180px;
+}
+
+.dw-search {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+
+.dw-search .el-input {
+  width: 100%;
+}
+
+.dw-search__btn {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  z-index: 2;
+}
+
+.dw-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #dfe9fb;
+  color: var(--dw-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.dw-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+/* 过渡 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

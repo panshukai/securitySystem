@@ -1,0 +1,158 @@
+.dw-video-grid {
+  display: grid;
+  gap: 5px;
+  grid-auto-rows: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+}
+
+.dw-video-pane {
+  position: relative;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #0b1526;
+  cursor: pointer;
+  min-height: 0;
+}
+
+.dw-video-pane.is-active {
+  outline: 2px solid #1a66ff;
+  outline-offset: -2px;
+}
+
+.dw-video-pane__feed {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.08), transparent 45%),
+    linear-gradient(120deg, #12233f 0%, #1d3a63 30%, #0e1d36 55%, #24466f 80%, #101f3a 100%);
+  background-size: 300% 300%;
+  animation: dw-feed 10s linear infinite;
+}
+
+.dw-video-pane__feed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.028) 0,
+    rgba(255, 255, 255, 0.028) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: screen;
+}
+
+.dw-video-pane__feed.has-image {
+  animation: none;
+  background-size: cover;
+  background-position: center;
+}
+
+.dw-video-pane__feed.has-image::after {
+  display: none;
+}
+
+.dw-video-pane__feed::after {
+  content: '模拟画面 · 点击左侧通道加载';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(190, 212, 245, 0.35);
+  font-size: 12px;
+  letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+@keyframes dw-feed {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}
+
+.dw-video-pane__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent);
+  color: #fff;
+  font-size: 12px;
+  z-index: 2;
+}
+
+.dw-video-pane__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2eb872;
+  box-shadow: 0 0 6px #2eb872;
+  flex-shrink: 0;
+}
+
+.dw-video-pane__time {
+  margin-left: auto;
+  font-size: 11px;
+  color: #dfe7f5;
+  font-variant-numeric: tabular-nums;
+}
+
+.dw-video-pane__ctrl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 10px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.6), transparent);
+  color: #dfe7f5;
+  z-index: 2;
+}
+
+.dw-video-pane__ctrl .vic {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.dw-video-pane__ctrl .vic:hover {
+  color: #fff;
+}
+
+.dw-video-pane__stream {
+  margin-left: auto;
+  font-size: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 4px;
+  padding: 0 8px;
+  cursor: pointer;
+  line-height: 18px;
+}
+
+.dw-video-pane__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #5a6f92;
+  font-size: 12px;
+  background: #0b1526;
+}
+
+.dw-video-pane__empty small {
+  color: #465a7c;
+  font-size: 11px;
+}
