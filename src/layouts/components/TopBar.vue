@@ -1,13 +1,18 @@
 <script setup>
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import AppIcon from '@/components/AppIcon.vue'
 import { modules, moduleOfPath } from '@/menu/menu.config'
 import { useAppStore } from '@/stores/app'
+import { setLocale, localeOptions } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const app = useAppStore()
+const { t, locale } = useI18n()
+const currentLang = computed(() => localeOptions.find((o) => o.value === locale.value)?.short || '中文')
 
 const current = () => moduleOfPath(route.path).key
 
@@ -16,11 +21,15 @@ function go(mod) {
 }
 
 function onBell() {
-  ElMessage.success(`你有 ${app.unread} 条未读通知`)
+  ElMessage.success(t('topbar.notifications', { n: app.unread }))
 }
 
 function onUser() {
-  ElMessage.info(`当前用户：${app.user.name}（${app.user.role}）`)
+  ElMessage.info(t('topbar.currentUser', { name: app.user.name, role: app.user.role }))
+}
+
+function onLocale(lang) {
+  setLocale(lang)
 }
 </script>
 
@@ -28,7 +37,7 @@ function onUser() {
   <header class="topbar">
     <div class="topbar__logo" @click="router.push('/event/center')">
       <span class="topbar__mark"><AppIcon name="shield" :size="20" /></span>
-      <span class="topbar__name">鼎位安防综合管理平台</span>
+      <span class="topbar__name">{{ t('app.name') }}</span>
     </div>
     <nav class="topbar__nav">
       <div
@@ -39,7 +48,7 @@ function onUser() {
         @click="go(mod)"
       >
         <AppIcon :name="mod.icon" :size="17" />
-        <span>{{ mod.title }}</span>
+        <span>{{ t(`nav.${mod.key}`) }}</span>
       </div>
     </nav>
     <div class="topbar__right">
@@ -47,9 +56,27 @@ function onUser() {
         <AppIcon name="bell" :size="19" />
         <span v-if="app.unread" class="topbar__badge">{{ app.unread }}</span>
       </span>
-      <span class="topbar__icon" @click="ElMessage.info('帮助中心：演示环境')">
+      <span class="topbar__icon" @click="ElMessage.info(t('topbar.help'))">
         <AppIcon name="warn" :size="18" />
       </span>
+      <el-dropdown trigger="click" @command="onLocale">
+        <span class="topbar__lang">
+          <AppIcon name="globe" :size="17" />
+          <span>{{ currentLang }}</span>
+        </span>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item
+              v-for="opt in localeOptions"
+              :key="opt.value"
+              :command="opt.value"
+              :disabled="locale === opt.value"
+            >
+              {{ opt.label }}
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <span class="topbar__user" @click="onUser">
         <span class="topbar__avatar"><AppIcon name="user" :size="15" /></span>
         <span>{{ app.user.name }}</span>
@@ -173,6 +200,20 @@ function onUser() {
   align-items: center;
   justify-content: center;
   padding: 0 4px;
+}
+
+.topbar__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #c2d2ea;
+  cursor: pointer;
+  outline: none;
+}
+
+.topbar__lang:hover {
+  color: #fff;
 }
 
 .topbar__user {

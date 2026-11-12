@@ -5,6 +5,7 @@ import BaseChart from './BaseChart.vue'
 const props = defineProps({
   data: { type: Array, default: () => [] },
   total: { type: String, default: '1,286' },
+  centerLabel: { type: String, default: '事件总数' },
   height: { type: Number, default: 150 }
 })
 
@@ -47,7 +48,7 @@ const option = computed(() => ({
       left: 'center',
       top: '56%',
       style: {
-        text: '事件总数',
+        text: props.centerLabel,
         fill: '#8a97a8',
         fontSize: 11,
         textAlign: 'center'

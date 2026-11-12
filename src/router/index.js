@@ -49,15 +49,16 @@ const router = createRouter({
           component: () => import('@/views/person/PersonList.vue'),
           meta: { title: '人员信息管理', group: 'access' }
         },
+        {
+          path: 'event/alarm',
+          component: () => import('@/views/event/AlarmManagement.vue'),
+          meta: { title: '实时告警', group: 'event' }
+        },
         ...placeholderRoutes
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/event/center' }
   ]
-})
-
-router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} · 鼎位安防综合管理平台` : '鼎位安防综合管理平台'
 })
 
 export default router

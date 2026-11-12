@@ -13,6 +13,7 @@ export const modules = [
       { title: '视频巡检', icon: 'layers', path: '/video/patrol' },
       {
         title: '视频配置',
+        labelKey: 'menu.video.configGroup',
         icon: 'gear',
         children: [
           { title: '视频参数配置', path: '/video/config/param' },
@@ -30,6 +31,7 @@ export const modules = [
       { title: '首页', icon: 'home', path: '/access/home' },
       {
         title: '组织与人员',
+        labelKey: 'menu.access.orgGroup',
         icon: 'org',
         open: true,
         children: [
@@ -43,6 +45,7 @@ export const modules = [
       },
       {
         title: '门禁管理',
+        labelKey: 'menu.access.doorGroup',
         icon: 'door',
         open: true,
         children: [
@@ -66,6 +69,7 @@ export const modules = [
       { title: '首页', icon: 'home', path: '/device/home' },
       {
         title: '设备管理',
+        labelKey: 'menu.device.deviceGroup',
         icon: 'device',
         open: true,
         children: [
@@ -93,11 +97,12 @@ export const modules = [
     menu: [
       {
         title: '告警管理',
+        labelKey: 'menu.event.alarmGroup',
         icon: 'bell',
         open: true,
         badge: true,
         children: [
-          { title: '实时告警', path: '/event/alarm' },
+          { title: '实时告警', path: '/event/alarm', implemented: true },
           { title: '告警规则', path: '/event/alarm-rule' }
         ]
       },
@@ -105,6 +110,7 @@ export const modules = [
       { title: '事件联动', icon: 'link', path: '/event/linkage' },
       {
         title: '处置流程',
+        labelKey: 'menu.event.flowGroup',
         icon: 'flow',
         children: [
           { title: '流程配置', path: '/event/flow' },
@@ -124,6 +130,7 @@ export const modules = [
     menu: [
       {
         title: '系统管理',
+        labelKey: 'menu.system.systemGroup',
         icon: 'gear',
         open: true,
         children: [

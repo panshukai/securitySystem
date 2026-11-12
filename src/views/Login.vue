@@ -1,22 +1,26 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+import { setLocale, localeOptions } from '@/i18n'
 import { ElMessage } from 'element-plus'
 import AppIcon from '@/components/AppIcon.vue'
 
 const router = useRouter()
+const { t, locale } = useI18n()
+const currentLang = computed(() => localeOptions.find((o) => o.value === locale.value)?.short || '中文')
 const form = ref({ account: 'admin', password: '123456', remember: true })
 const loading = ref(false)
 
 function submit() {
   if (!form.value.account || !form.value.password) {
-    ElMessage.warning('请输入账号和密码')
+    ElMessage.warning(t('page.login.empty'))
     return
   }
   loading.value = true
   setTimeout(() => {
     loading.value = false
-    ElMessage.success('登录成功（演示环境）')
+    ElMessage.success(t('page.login.success'))
     router.push('/event/center')
   }, 350)
 }
@@ -24,34 +28,52 @@ function submit() {
 
 <template>
   <div class="login">
+    <el-dropdown class="login__lang" trigger="click" @command="setLocale">
+      <span class="login__lang-btn">
+        <AppIcon name="globe" :size="16" />
+        <span>{{ currentLang }}</span>
+      </span>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item
+            v-for="opt in localeOptions"
+            :key="opt.value"
+            :command="opt.value"
+            :disabled="locale === opt.value"
+          >
+            {{ opt.label }}
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
     <div class="login__panel">
       <div class="login__brand">
         <div class="login__mark"><AppIcon name="shield" :size="30" /></div>
-        <div class="login__title">鼎位安防综合管理平台</div>
-        <div class="login__slogan">统一接入 · 集中监管 · 事件闭环</div>
+        <div class="login__title">{{ t('app.name') }}</div>
+        <div class="login__slogan">{{ t('app.slogan') }}</div>
         <ul class="login__points">
-          <li><AppIcon name="video" :size="16" /> 270 路视频统一预览与回放</li>
-          <li><AppIcon name="door" :size="16" /> 54 个门禁点权限集中下发</li>
-          <li><AppIcon name="bell" :size="16" /> 安防事件分级处置与闭环</li>
+          <li><AppIcon name="video" :size="16" /> {{ t('page.login.pointVideo') }}</li>
+          <li><AppIcon name="door" :size="16" /> {{ t('page.login.pointDoor') }}</li>
+          <li><AppIcon name="bell" :size="16" /> {{ t('page.login.pointEvent') }}</li>
         </ul>
-        <div class="login__foot">© 2026 鼎位安防 · 演示环境</div>
+        <div class="login__foot">{{ t('app.footer') }}</div>
       </div>
       <div class="login__form">
-        <h2>账号登录</h2>
-        <p class="login__hint">演示账号已预填，直接登录即可</p>
+        <h2>{{ t('page.login.title') }}</h2>
+        <p class="login__hint">{{ t('page.login.hint') }}</p>
         <el-form label-position="top" @submit.prevent="submit">
-          <el-form-item label="账号">
-            <el-input v-model="form.account" size="large" placeholder="请输入账号" />
+          <el-form-item :label="t('page.login.account')">
+            <el-input v-model="form.account" size="large" :placeholder="t('page.login.accountPlaceholder')" />
           </el-form-item>
-          <el-form-item label="密码">
-            <el-input v-model="form.password" size="large" type="password" show-password placeholder="请输入密码" />
+          <el-form-item :label="t('page.login.password')">
+            <el-input v-model="form.password" size="large" type="password" show-password :placeholder="t('page.login.passwordPlaceholder')" />
           </el-form-item>
           <div class="login__row">
-            <el-checkbox v-model="form.remember">记住密码</el-checkbox>
-            <span class="dw-link">忘记密码？</span>
+            <el-checkbox v-model="form.remember">{{ t('page.login.remember') }}</el-checkbox>
+            <span class="dw-link">{{ t('page.login.forgot') }}</span>
           </div>
           <el-button type="primary" size="large" class="login__submit" :loading="loading" @click="submit">
-            登 录
+            {{ t('page.login.submit') }}
           </el-button>
         </el-form>
       </div>
@@ -69,6 +91,32 @@ function submit() {
     radial-gradient(circle at 18% 18%, rgba(47, 123, 255, 0.28), transparent 40%),
     radial-gradient(circle at 82% 82%, rgba(18, 150, 176, 0.2), transparent 45%),
     linear-gradient(120deg, #071426, #0b1f3c 55%, #0a1a31);
+}
+
+.login__lang {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+}
+
+.login__lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #dbe6f8;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.login__lang-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .login__panel {

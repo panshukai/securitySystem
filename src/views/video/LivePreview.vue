@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -9,6 +10,7 @@ import { useVideoStore } from '@/stores/video'
 
 const route = useRoute()
 const store = useVideoStore()
+const { t } = useI18n()
 const videoCard = ref(null)
 const now = ref('')
 let timer = null
@@ -46,7 +48,7 @@ onBeforeUnmount(() => {
 
 function onSelectChannel(node) {
   store.loadChannelToActive(node)
-  ElMessage.success(`「${node.name}」已加载到窗格 ${store.active + 1}`)
+  ElMessage.success(t('page.video.loaded', { name: node.name, pane: store.active + 1 }))
 }
 
 function setSplit(n) {
@@ -67,7 +69,7 @@ function feedOf(index) {
 }
 
 function placeholder(name) {
-  ElMessage.info(`「${name}」为演示占位`)
+  ElMessage.info(t('page.video.demo', { name }))
 }
 
 async function toggleFullscreen() {
@@ -83,22 +85,22 @@ async function toggleFullscreen() {
 
 <template>
   <div class="live-page">
-    <PageHeader title="实时预览" subtitle="GB28181 国标设备接入 · 浏览器免插件播放">
+    <PageHeader :title="t('menu.video.live')" :subtitle="t('page.video.subtitle')">
       <div class="seg">
-        <span :class="{ on: store.mode === 'multi' }" @click="store.setMode('multi')">多画面</span>
-        <span :class="{ on: store.mode === 'single' }" @click="store.setMode('single')">单画面</span>
+        <span :class="{ on: store.mode === 'multi' }" @click="store.setMode('multi')">{{ t('page.video.multi') }}</span>
+        <span :class="{ on: store.mode === 'single' }" @click="store.setMode('single')">{{ t('page.video.single') }}</span>
       </div>
       <div class="seg">
         <span :class="{ on: store.split === 4 && store.mode !== 'single' }" @click="setSplit(4)">
-          <AppIcon name="grid" :size="13" /> 四分屏
+          <AppIcon name="grid" :size="13" /> {{ t('page.video.split4') }}
         </span>
         <span :class="{ on: store.split === 9 && store.mode !== 'single' }" @click="setSplit(9)">
-          <AppIcon name="grid" :size="13" /> 九分屏
+          <AppIcon name="grid" :size="13" /> {{ t('page.video.split9') }}
         </span>
         <span :class="{ on: store.split === 16 && store.mode !== 'single' }" @click="setSplit(16)">
-          <AppIcon name="grid" :size="13" /> 十六分屏
+          <AppIcon name="grid" :size="13" /> {{ t('page.video.split16') }}
         </span>
-        <span @click="placeholder('自定义分屏')"><AppIcon name="grid" :size="13" /> 自定义</span>
+        <span @click="placeholder(t('page.video.custom'))"><AppIcon name="grid" :size="13" /> {{ t('page.video.custom') }}</span>
       </div>
       <span class="icon-btn" @click="toggleFullscreen"><AppIcon name="full" :size="17" /></span>
     </PageHeader>
@@ -106,10 +108,10 @@ async function toggleFullscreen() {
     <div class="video-layout">
       <div class="dw-card tree-card">
         <OrgTreePanel
-          title="资源目录"
+          :title="t('page.video.resourceTree')"
           :data="store.root ? [store.root] : []"
           :selected-key="activeChannelId"
-          search-placeholder="请输入仓点名称或通道名称"
+          :search-placeholder="t('page.video.channelSearch')"
           @select="onSelectChannel"
         />
       </div>
@@ -140,20 +142,20 @@ async function toggleFullscreen() {
             </template>
             <div v-else class="dw-video-pane__empty">
               <AppIcon name="cam" :size="30" />
-              <span>请从左侧资源树选择通道</span>
-              <small>点击选中该窗格后再点通道即可加载</small>
+              <span>{{ t('page.video.chooseChannel') }}</span>
+              <small>{{ t('page.video.chooseHint') }}</small>
             </div>
           </div>
         </div>
 
         <div class="video-bar">
-          <span class="bar-icon" title="播放/停止" @click="placeholder('播放/停止')"><AppIcon name="play" :size="15" /></span>
-          <span class="bar-icon" title="截图" @click="placeholder('截图')"><AppIcon name="snap" :size="15" /></span>
-          <span class="bar-icon" title="录像" @click="placeholder('录像')"><AppIcon name="rec" :size="15" /></span>
-          <span class="bar-icon" title="声音" @click="placeholder('声音')"><AppIcon name="audio" :size="15" /></span>
-          <span class="bar-icon" title="云台控制" @click="placeholder('云台控制')"><AppIcon name="ptz" :size="15" /></span>
-          <span class="bar-icon" title="分屏调整" @click="placeholder('分屏调整')"><AppIcon name="grid" :size="15" /></span>
-          <span class="stream" @click="placeholder('码流切换')">主码流 ⌄</span>
+          <span class="bar-icon" :title="t('page.video.playStop')" @click="placeholder(t('page.video.playStop'))"><AppIcon name="play" :size="15" /></span>
+          <span class="bar-icon" :title="t('page.video.snapshot')" @click="placeholder(t('page.video.snapshot'))"><AppIcon name="snap" :size="15" /></span>
+          <span class="bar-icon" :title="t('page.video.record')" @click="placeholder(t('page.video.record'))"><AppIcon name="rec" :size="15" /></span>
+          <span class="bar-icon" :title="t('page.video.audio')" @click="placeholder(t('page.video.audio'))"><AppIcon name="audio" :size="15" /></span>
+          <span class="bar-icon" :title="t('page.video.ptz')" @click="placeholder(t('page.video.ptz'))"><AppIcon name="ptz" :size="15" /></span>
+          <span class="bar-icon" :title="t('page.video.layout')" @click="placeholder(t('page.video.layout'))"><AppIcon name="grid" :size="15" /></span>
+          <span class="stream" @click="placeholder(t('page.video.mainStream'))">{{ t('page.video.mainStream') }} ⌄</span>
           <span class="bar-icon bar-full" @click="toggleFullscreen"><AppIcon name="full" :size="16" /></span>
         </div>
       </div>

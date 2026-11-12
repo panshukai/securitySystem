@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import PageTabs from '@/components/PageTabs.vue'
@@ -11,23 +12,42 @@ import { usePersonStore } from '@/stores/person'
 
 const router = useRouter()
 const store = usePersonStore()
+const { t } = useI18n()
 const baseUrl = import.meta.env.BASE_URL
 const keyword = ref('')
 const statusFilter = ref('')
 
-const tabs = [
-  { label: '人员档案', value: '/access/person' },
-  { label: '人员批量导入', value: '/access/person-import' },
-  { label: '人员分组', value: '/access/person-group' },
-  { label: '人员变更记录', value: '/access/person-log' }
-]
+const tabs = computed(() => [
+  { label: t('page.person.tabProfile'), value: '/access/person' },
+  { label: t('menu.access.person-import'), value: '/access/person-import' },
+  { label: t('menu.access.person-group'), value: '/access/person-group' },
+  { label: t('menu.access.person-log'), value: '/access/person-log' }
+])
 
-const detailTabs = [
-  { label: '基本信息', value: 'basic' },
-  { label: '身份凭证', value: 'credential' },
-  { label: '门禁权限', value: 'perm' },
-  { label: '人员轨迹', value: 'track' }
-]
+const detailTabs = computed(() => [
+  { label: t('page.person.detailBasic'), value: 'basic' },
+  { label: t('page.person.detailCredential'), value: 'credential' },
+  { label: t('page.person.detailPerm'), value: 'perm' },
+  { label: t('page.person.detailTrack'), value: 'track' }
+])
+
+const POST_KEYS = { 仓点管理员: 'siteManager', 运营人员: 'operator', 设备巡检: 'inspector', 合作方人员: 'partner', 安全员: 'safety' }
+const PERSON_STATUS_KEYS = { 在职: 'active', 临时: 'temporary', 停用: 'disabled' }
+function postLabel(value) {
+  return t(`posts.${POST_KEYS[value] || 'operator'}`)
+}
+function personStatusLabel(value) {
+  return t(`status.${PERSON_STATUS_KEYS[value] || 'active'}`)
+}
+function credentialTypeLabel(value) {
+  return value === '人脸凭证' ? t('page.person.credentialFace') : value === '门禁卡' ? t('page.person.credentialCard') : value
+}
+function trackActionLabel(value) {
+  return value === '人脸验证通过' ? t('page.person.actionFace') : value
+}
+function trackResultLabel(value) {
+  return value === '通行' ? t('page.person.resultPass') : value
+}
 
 const orgOptions = [
   { label: 'HZ001-杭州前置仓', value: 'HZ001-杭州前置仓' },
@@ -71,27 +91,27 @@ function rowClass({ row }) {
 }
 
 function fmtExpire(value) {
-  return value || '长期有效'
+  return value || t('common.longTerm')
 }
 
 function todo(name) {
-  ElMessage.info(`「${name}」为演示占位功能`)
+  ElMessage.info(t('page.video.demo', { name }))
 }
 </script>
 
 <template>
   <div class="person-page">
-    <PageHeader title="人员信息管理" subtitle="组织人员档案、身份凭证与门禁权限统一管理">
+    <PageHeader :title="t('menu.access.person')" :subtitle="t('page.person.subtitle')">
       <PageTabs :tabs="tabs" model-value="/access/person" @change="switchTab" />
     </PageHeader>
 
     <div class="person-layout">
       <div class="dw-card tree-card">
         <OrgTreePanel
-          title="组织架构"
+          :title="t('page.person.orgTitle')"
           :data="store.orgTree ? [store.orgTree] : []"
           :selected-key="store.selectedOrgId"
-          search-placeholder="请输入组织名称"
+          :search-placeholder="t('page.person.orgSearch')"
           show-add
           @select="store.selectOrg"
         />
@@ -100,20 +120,20 @@ function todo(name) {
       <div class="person-main">
         <div class="dw-card list-card">
           <div class="toolbar-row">
-            <el-button type="primary" size="small" @click="todo('新增人员')">
-              <AppIcon name="add" :size="14" style="margin-right: 5px" />新增人员
+            <el-button type="primary" size="small" @click="todo(t('page.person.addPerson'))">
+              <AppIcon name="add" :size="14" style="margin-right: 5px" />{{ t('page.person.addPerson') }}
             </el-button>
-            <el-button size="small" @click="todo('批量导入')">
-              <AppIcon name="export" :size="14" style="margin-right: 5px" />批量导入
+            <el-button size="small" @click="todo(t('page.person.batchImport'))">
+              <AppIcon name="export" :size="14" style="margin-right: 5px" />{{ t('page.person.batchImport') }}
             </el-button>
-            <el-button size="small" @click="todo('批量导出')">
-              <AppIcon name="down" :size="14" style="margin-right: 5px" />批量导出
+            <el-button size="small" @click="todo(t('page.person.batchExport'))">
+              <AppIcon name="down" :size="14" style="margin-right: 5px" />{{ t('page.person.batchExport') }}
             </el-button>
-            <el-button size="small" @click="todo('人脸采集')">
-              <AppIcon name="facescan" :size="14" style="margin-right: 5px" />人脸采集
+            <el-button size="small" @click="todo(t('page.person.faceCollect'))">
+              <AppIcon name="facescan" :size="14" style="margin-right: 5px" />{{ t('page.person.faceCollect') }}
             </el-button>
-            <el-button size="small" @click="todo('更多操作')">
-              <AppIcon name="more" :size="14" style="margin-right: 5px" />更多操作
+            <el-button size="small" @click="todo(t('page.person.moreOps'))">
+              <AppIcon name="more" :size="14" style="margin-right: 5px" />{{ t('page.person.moreOps') }}
             </el-button>
           </div>
 
@@ -122,7 +142,7 @@ function todo(name) {
               <el-input
                 v-model="keyword"
                 size="small"
-                placeholder="姓名 / 工号 / 证件号码"
+                :placeholder="t('page.person.searchPlaceholder')"
                 clearable
                 @keyup.enter="search"
               >
@@ -133,14 +153,14 @@ function todo(name) {
                 </template>
               </el-input>
             </div>
-            <span class="filter-label">人员状态：</span>
-            <el-select :model-value="statusFilter" size="small" placeholder="全部" style="width: 96px" @update:model-value="changeStatus">
-              <el-option label="全部" value="" />
-              <el-option label="在职" value="在职" />
-              <el-option label="临时" value="临时" />
-              <el-option label="停用" value="停用" />
+            <span class="filter-label">{{ t('page.person.statusFilter') }}:</span>
+            <el-select :model-value="statusFilter" size="small" :placeholder="t('common.all')" style="width: 96px" @update:model-value="changeStatus">
+              <el-option :label="t('common.all')" value="" />
+              <el-option :label="t('status.active')" value="在职" />
+              <el-option :label="t('status.temporary')" value="临时" />
+              <el-option :label="t('status.disabled')" value="停用" />
             </el-select>
-            <span class="filter-label">所属组织：</span>
+            <span class="filter-label">{{ t('page.person.orgFilter') }}:</span>
             <el-select v-model="selectedOrgName" size="small" style="width: 158px">
               <el-option v-for="o in orgOptions" :key="o.value" :label="o.label" :value="o.value" />
             </el-select>
@@ -155,30 +175,32 @@ function todo(name) {
             @row-click="(row) => store.selectPerson(row.id)"
           >
             <el-table-column type="selection" width="26" />
-            <el-table-column label="姓名" width="66">
+            <el-table-column :label="t('page.person.colName')" width="66">
               <template #default="{ row }">
                 <span class="person-name">{{ row.name }}</span>
               </template>
             </el-table-column>
-            <el-table-column prop="no" label="工号" width="78" />
-            <el-table-column prop="orgName" label="所属组织" min-width="116" />
-            <el-table-column prop="post" label="岗位" width="84" />
-            <el-table-column label="人员状态" width="68">
+            <el-table-column prop="no" :label="t('page.person.colNo')" width="78" />
+            <el-table-column prop="orgName" :label="t('page.person.colOrg')" min-width="116" />
+            <el-table-column :label="t('page.person.colPost')" width="104">
+              <template #default="{ row }">{{ postLabel(row.post) }}</template>
+            </el-table-column>
+            <el-table-column :label="t('page.person.colStatus')" width="84">
               <template #default="{ row }"><StatusTag :text="row.status" /></template>
             </el-table-column>
-            <el-table-column prop="idCard" label="身份证号" min-width="132" />
-            <el-table-column label="操作" width="104" fixed="right">
+            <el-table-column prop="idCard" :label="t('page.person.colId')" min-width="132" />
+            <el-table-column :label="t('common.actions')" width="104" fixed="right">
               <template #default="{ row }">
                 <span class="ops-links">
-                  <span class="dw-link" @click.stop="store.selectPerson(row.id)">编辑</span>
-                  <span class="dw-link" @click.stop="todo('更多')">更多 ⌄</span>
+                  <span class="dw-link" @click.stop="store.selectPerson(row.id)">{{ t('page.person.edit') }}</span>
+                  <span class="dw-link" @click.stop="todo(t('common.more'))">{{ t('page.person.more') }}</span>
                 </span>
               </template>
             </el-table-column>
           </el-table>
 
           <div class="table-foot">
-            <span class="dw-sub">共 {{ store.total }} 条</span>
+            <span class="dw-sub">{{ t('common.total', { n: store.total }) }}</span>
             <el-pagination
               background
               layout="prev, pager, next, sizes"
@@ -202,55 +224,55 @@ function todo(name) {
               </div>
               <div class="detail-name">
                 {{ store.detail.name }}
-                <span class="detail-no">（{{ store.detail.no }}）</span>
+                <span class="detail-no">({{ store.detail.no }})</span>
                 <StatusTag :text="store.detail.status" />
               </div>
               <div class="detail-meta">
-                <div><AppIcon name="org" :size="14" /> 所属组织：{{ store.detail.orgName }}</div>
-                <div><AppIcon name="building" :size="14" /> 岗位：{{ store.detail.post }}</div>
-                <div><AppIcon name="phone" :size="14" /> 手机：{{ store.detail.phone }}</div>
-                <div><AppIcon name="idcard" :size="14" /> 身份证：{{ store.detail.idCard }}</div>
+                <div><AppIcon name="org" :size="14" /> {{ t('page.person.fieldOrg') }}: {{ store.detail.orgName }}</div>
+                <div><AppIcon name="building" :size="14" /> {{ t('page.person.fieldPost') }}: {{ postLabel(store.detail.post) }}</div>
+                <div><AppIcon name="phone" :size="14" /> {{ t('page.person.fieldPhone') }}: {{ store.detail.phone }}</div>
+                <div><AppIcon name="idcard" :size="14" /> {{ t('page.person.fieldId') }}: {{ store.detail.idCard }}</div>
               </div>
             </div>
 
             <div class="detail-body">
               <div class="dw-tabs detail-tabs">
                 <div
-                  v-for="t in detailTabs"
-                  :key="t.value"
+                  v-for="tab in detailTabs"
+                  :key="tab.value"
                   class="dw-tab"
-                  :class="{ 'is-active': store.detailTab === t.value }"
-                  @click="store.detailTab = t.value"
+                  :class="{ 'is-active': store.detailTab === tab.value }"
+                  @click="store.detailTab = tab.value"
                 >
-                  {{ t.label }}
+                  {{ tab.label }}
                 </div>
               </div>
 
               <div v-if="store.detailTab === 'perm'" class="detail-pane">
                 <el-table :data="store.detail.permissions" class="compact-table" style="width: 100%">
-                  <el-table-column prop="door" label="门禁点" min-width="116" class-name="nowrap-cell" />
-                  <el-table-column prop="plan" label="权限计划" min-width="114" class-name="nowrap-cell" />
-                  <el-table-column prop="start" label="生效时间" width="116" class-name="nowrap-cell" />
-                  <el-table-column label="失效时间" width="82" class-name="nowrap-cell">
+                  <el-table-column prop="door" :label="t('page.person.colDoor')" min-width="116" class-name="nowrap-cell" />
+                  <el-table-column prop="plan" :label="t('page.person.colPlan')" min-width="114" class-name="nowrap-cell" />
+                  <el-table-column prop="start" :label="t('page.person.colStart')" width="116" class-name="nowrap-cell" />
+                  <el-table-column :label="t('page.person.colEnd')" width="82" class-name="nowrap-cell">
                     <template #default="{ row }">{{ fmtExpire(row.end) }}</template>
                   </el-table-column>
-                  <el-table-column label="下发状态" width="72">
+                  <el-table-column :label="t('page.person.colIssueStatus')" width="72">
                     <template #default="{ row }"><StatusTag :text="row.status" /></template>
                   </el-table-column>
                 </el-table>
-                <div v-if="!store.detail.permissions.length" class="dw-empty">该人员暂无门禁权限</div>
+                <div v-if="!store.detail.permissions.length" class="dw-empty">{{ t('page.person.emptyPerm') }}</div>
               </div>
 
               <div v-else-if="store.detailTab === 'basic'" class="detail-pane basic-grid">
                 <div v-for="item in [
-                  { k: '姓名', v: store.detail.name },
-                  { k: '工号', v: store.detail.no },
-                  { k: '所属组织', v: store.detail.orgName },
-                  { k: '岗位', v: store.detail.post },
-                  { k: '人员状态', v: store.detail.status },
-                  { k: '手机号码', v: store.detail.phone },
-                  { k: '身份证号', v: store.detail.idCard },
-                  { k: '人脸采集', v: store.detail.faceCollected ? '已采集' : '未采集' }
+                  { k: t('page.person.fieldName'), v: store.detail.name },
+                  { k: t('page.person.fieldNo'), v: store.detail.no },
+                  { k: t('page.person.fieldOrg'), v: store.detail.orgName },
+                  { k: t('page.person.fieldPost'), v: postLabel(store.detail.post) },
+                  { k: t('page.person.fieldStatus'), v: personStatusLabel(store.detail.status) },
+                  { k: t('page.person.fieldPhoneFull'), v: store.detail.phone },
+                  { k: t('page.person.fieldIdFull'), v: store.detail.idCard },
+                  { k: t('page.person.fieldFace'), v: store.detail.faceCollected ? t('page.person.collected') : t('page.person.notCollected') }
                 ]" :key="item.k" class="basic-item">
                   <span class="k">{{ item.k }}</span>
                   <span class="v">{{ item.v }}</span>
@@ -259,29 +281,31 @@ function todo(name) {
 
               <div v-else-if="store.detailTab === 'credential'" class="detail-pane">
                 <el-table :data="store.detail.credentials" style="width: 100%">
-                  <el-table-column prop="type" label="凭证类型" min-width="140" />
-                  <el-table-column prop="value" label="凭证信息" min-width="180" />
-                  <el-table-column label="状态" width="100">
+                  <el-table-column :label="t('page.person.colCredentialType')" min-width="140">
+                  <template #default="{ row }">{{ credentialTypeLabel(row.type) }}</template>
+                </el-table-column>
+                  <el-table-column prop="value" :label="t('page.person.colCredentialValue')" min-width="180" />
+                  <el-table-column :label="t('page.person.colCredentialStatus')" width="100">
                     <template #default="{ row }"><StatusTag :text="row.status" /></template>
                   </el-table-column>
                 </el-table>
               </div>
 
               <div v-else class="detail-pane track-pane">
-                <div v-for="(t, i) in store.detail.tracks" :key="i" class="track-item">
+                <div v-for="(item, i) in store.detail.tracks" :key="i" class="track-item">
                   <div class="track-line">
                     <span class="track-dot" />
                     <span v-if="i < store.detail.tracks.length - 1" class="track-rule" />
                   </div>
                   <div class="track-content">
-                    <div class="track-time">{{ t.time }}</div>
-                    <div class="track-desc">{{ t.door }} · {{ t.action }}<span class="track-result">{{ t.result }}</span></div>
+                    <div class="track-time">{{ item.time }}</div>
+                    <div class="track-desc">{{ item.door }} · {{ trackActionLabel(item.action) }}<span class="track-result">{{ trackResultLabel(item.result) }}</span></div>
                   </div>
                 </div>
               </div>
             </div>
           </template>
-          <div v-else class="dw-empty">请选择人员查看详情</div>
+          <div v-else class="dw-empty">{{ t('page.person.emptyPerson') }}</div>
         </div>
       </div>
     </div>

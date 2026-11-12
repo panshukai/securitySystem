@@ -1,21 +1,31 @@
 <script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
 
-defineProps({
+const props = defineProps({
   title: { type: String, default: '功能页面' },
   subtitle: { type: String, default: '' }
+})
+
+const route = useRoute()
+const { t, te } = useI18n()
+const pageTitle = computed(() => {
+  const key = `menu.${route.path.replace(/^\//, '').replace(/\//g, '.')}`
+  return te(key) ? t(key) : props.title
 })
 </script>
 
 <template>
   <div>
-    <PageHeader :title="title" subtitle="演示占位页" />
+    <PageHeader :title="pageTitle" :subtitle="t('page.placeholder.subtitle')" />
     <div class="dw-card placeholder">
       <AppIcon name="layers" :size="44" style="color: #c9d4e4" />
-      <div class="placeholder__title">{{ title }}</div>
+      <div class="placeholder__title">{{ pageTitle }}</div>
       <div class="placeholder__desc">
-        {{ subtitle || '该页面暂未在首版范围内实现，可在确认整体方案后继续补充。' }}
+        {{ props.subtitle || t('page.placeholder.desc') }}
       </div>
     </div>
   </div>

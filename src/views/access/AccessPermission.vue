@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import PageTabs from '@/components/PageTabs.vue'
@@ -11,6 +12,7 @@ import { useAccessStore } from '@/stores/access'
 
 const router = useRouter()
 const store = useAccessStore()
+const { t } = useI18n()
 const expanded = reactive({})
 const personKw = ref('')
 
@@ -20,13 +22,13 @@ const filteredPersons = computed(() => {
   return store.persons.filter((p) => `${p.name}${p.no}${p.orgName}`.includes(kw))
 })
 
-const tabs = [
-  { label: '权限配置', value: 'perm' },
-  { label: '权限下发', value: 'issue' },
-  { label: '权限查询', value: 'query' },
-  { label: '授权记录', value: 'record' },
-  { label: '权限变更', value: 'change' }
-]
+const tabs = computed(() => [
+  { label: t('page.access.tabPerm'), value: 'perm' },
+  { label: t('page.access.tabIssue'), value: 'issue' },
+  { label: t('page.access.tabQuery'), value: 'query' },
+  { label: t('page.access.tabRecord'), value: 'record' },
+  { label: t('page.access.tabChange'), value: 'change' }
+])
 
 const tabPath = {
   issue: '/access/issue',
@@ -35,7 +37,7 @@ const tabPath = {
   change: '/access/control'
 }
 
-const steps = ['选择授权对象', '配置通行计划', '选择门禁资源', '确认并下发']
+const steps = computed(() => [t('page.access.stepSelect'), t('page.access.stepPlan'), t('page.access.stepDoor'), t('page.access.stepConfirm')])
 
 const checkedMap = computed(() => {
   const map = {}
@@ -69,7 +71,7 @@ function withCounts(nodes) {
 
 const doorsTree = computed(() => (store.doorTree ? withCounts([store.doorTree]) : []))
 
-const selectedPlanText = computed(() => store.selectedPlan?.name || '未选择')
+const selectedPlanText = computed(() => store.selectedPlan?.name || '—')
 
 onMounted(() => {
   store.loadAll()
@@ -96,25 +98,25 @@ function switchTab(value) {
 function next() {
   if (store.step === 1) {
     if (!store.selectedNos.length) {
-      ElMessage.warning('请先选择授权人员')
+      ElMessage.warning(t('page.access.msgNoPerson'))
       return
     }
     if (store.validity.type === 'custom' && store.validity.from > store.validity.to) {
-      ElMessage.warning('有效期开始日期不能晚于结束日期')
+      ElMessage.warning(t('page.access.msgDate'))
       return
     }
   }
   if (store.step === 2 && !store.planId) {
-    ElMessage.warning('请选择通行计划')
+    ElMessage.warning(t('page.access.msgNoPlan'))
     return
   }
   if (store.step === 3) {
     if (!store.doorIds.length) {
-      ElMessage.warning('请至少选择一个门禁点')
+      ElMessage.warning(t('page.access.msgNoDoor'))
       return
     }
     if (store.validity.type === 'custom' && store.validity.from > store.validity.to) {
-      ElMessage.warning('有效期开始日期不能晚于结束日期')
+      ElMessage.warning(t('page.access.msgDate'))
       return
     }
   }
@@ -123,45 +125,54 @@ function next() {
 
 function goStep(step) {
   if (step < store.step) store.step = step
-  else if (step > store.step) ElMessage.info('请按步骤完成当前配置')
+  else if (step > store.step) ElMessage.info(t('page.access.msgStep'))
 }
 
 async function issue() {
   const res = await store.issue()
   if (!res.ok) {
-    ElMessage.warning(res.message)
+    const msgKeys = { noPerson: 'msgNoPerson', noDoor: 'msgNoDoor', date: 'msgDate' }
+    ElMessage.warning(t(`page.access.${msgKeys[res.code] || 'msgNoPerson'}`))
     return
   }
-  ElMessage.success(`权限已下发到 ${res.doors} 个门禁点，共 ${res.count} 条授权（演示）`)
+  ElMessage.success(t('page.access.msgIssued', { doors: res.doors, count: res.count }))
 }
 
 async function revoke(row) {
   try {
-    await ElMessageBox.confirm(`确认撤销「${row.name}」在「${row.door}」的通行权限？`, '撤销授权', {
-      confirmButtonText: '撤销',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
+    await ElMessageBox.confirm(
+      t('page.access.revokeConfirm', { name: row.name, door: row.door }),
+      t('page.access.revokeTitle'),
+      {
+        confirmButtonText: t('page.access.revoke'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    )
     await store.revoke(row.id)
-    ElMessage.success('已撤销该条授权（演示）')
+    ElMessage.success(t('page.access.msgRevoked'))
   } catch (e) {
     /* 取消 */
   }
 }
 
 function todo(name) {
-  ElMessage.info(`「${name}」为演示占位功能`)
+  ElMessage.info(t('page.video.demo', { name }))
 }
 
 function validityText(row) {
-  if (!row.end) return '长期有效'
-  return `${row.start} 至 ${row.end}`
+  if (!row.end) return t('common.longTerm')
+  return `${row.start} ~ ${row.end}`
+}
+
+function resultLabel(value) {
+  return value === '下发成功' ? t('status.issued') : value
 }
 </script>
 
 <template>
   <div class="access-page">
-    <PageHeader title="门禁权限配置" subtitle="按人员批量授权，配置通行计划并下发到门禁控制器">
+    <PageHeader :title="t('menu.access.perm')" :subtitle="t('page.access.subtitle')">
       <PageTabs :tabs="tabs" model-value="perm" @change="switchTab" />
     </PageHeader>
 
@@ -182,11 +193,11 @@ function validityText(row) {
       <!-- 第一步 -->
       <template v-if="store.step === 1">
         <div class="mode-row">
-          <span class="mode-label">授权方式：</span>
+          <span class="mode-label">{{ t('page.access.authMode') }}:</span>
           <el-radio-group v-model="store.mode">
-            <el-radio value="org">按组织授权</el-radio>
-            <el-radio value="group">按人员分组授权</el-radio>
-            <el-radio value="person">按人员授权</el-radio>
+            <el-radio value="org">{{ t('page.access.byOrg') }}</el-radio>
+            <el-radio value="group">{{ t('page.access.byGroup') }}</el-radio>
+            <el-radio value="person">{{ t('page.access.byPerson') }}</el-radio>
           </el-radio-group>
         </div>
 
@@ -194,17 +205,17 @@ function validityText(row) {
           <div class="panel">
             <div class="phead">
               <AppIcon name="user" :size="15" />
-              <span>选择人员</span>
-              <span class="cnt">（已选 {{ store.selectedNos.length }} 人）</span>
-              <span class="add" @click="todo('添加人员')">＋添加人员</span>
+              <span>{{ t('page.access.selectPerson') }}</span>
+              <span class="cnt">{{ t('page.access.selectedPersons', { n: store.selectedNos.length }) }}</span>
+              <span class="add" @click="todo(t('page.access.addPersonMsg'))">{{ t('page.access.addPerson') }}</span>
             </div>
-            <el-input v-model="personKw" size="small" placeholder="姓名 / 工号 / 证件号码" style="margin-bottom: 8px" />
+            <el-input v-model="personKw" size="small" :placeholder="t('page.access.personSearch')" style="margin-bottom: 8px" />
             <div class="person-table">
               <div class="person-head">
                 <span />
-                <span>姓名</span>
-                <span>工号</span>
-                <span>所属组织</span>
+                <span>{{ t('page.access.colName') }}</span>
+                <span>{{ t('page.access.colNo') }}</span>
+                <span>{{ t('page.access.colOrg') }}</span>
               </div>
               <div
                 v-for="p in filteredPersons"
@@ -228,8 +239,8 @@ function validityText(row) {
           <div class="panel">
             <div class="phead">
               <AppIcon name="clock" :size="15" />
-              <span>通行计划</span>
-              <span class="cnt">（1 个）</span>
+              <span>{{ t('page.access.plan') }}</span>
+              <span class="cnt">{{ t('page.access.planCount') }}</span>
             </div>
             <div
               v-for="p in store.plans"
@@ -249,8 +260,8 @@ function validityText(row) {
           <div class="panel">
             <div class="phead">
               <AppIcon name="door" :size="15" />
-              <span>选择门禁资源</span>
-              <span class="cnt">（已选 {{ store.doorIds.length }} 个）</span>
+              <span>{{ t('page.access.selectDoors') }}</span>
+              <span class="cnt">{{ t('page.access.selectedDoors', { n: store.doorIds.length }) }}</span>
             </div>
             <div class="door-tree">
               <OrgTreeNode
@@ -269,10 +280,10 @@ function validityText(row) {
         </div>
 
         <div class="valid-row">
-          <span class="mode-label">有效期：</span>
+          <span class="mode-label">{{ t('page.access.validity') }}:</span>
           <el-radio-group v-model="store.validity.type">
-            <el-radio value="long">长期有效</el-radio>
-            <el-radio value="custom">自定义</el-radio>
+            <el-radio value="long">{{ t('common.longTerm') }}</el-radio>
+            <el-radio value="custom">{{ t('common.custom') }}</el-radio>
           </el-radio-group>
           <el-date-picker
             v-model="store.validity.from"
@@ -293,7 +304,7 @@ function validityText(row) {
           />
           <span class="grow" />
           <el-button type="primary" size="small" @click="next">
-            下一步：确认并下发
+            {{ t('page.access.nextConfirm') }}
           </el-button>
         </div>
       </template>
@@ -302,7 +313,7 @@ function validityText(row) {
       <template v-else-if="store.step === 2">
         <div class="perm-grid">
           <div class="panel">
-            <div class="phead"><AppIcon name="user" :size="15" /><span>授权对象</span><span class="cnt">（{{ store.selectedNos.length }} 人）</span></div>
+            <div class="phead"><AppIcon name="user" :size="15" /><span>{{ t('page.access.objects') }}</span><span class="cnt">{{ t('page.access.selectedPersons', { n: store.selectedNos.length }) }}</span></div>
             <div v-for="p in store.selectedPersons" :key="p.id" class="recap-row">
               <span class="dw-avatar">{{ p.name[0] }}</span>
               <span>{{ p.name }}</span>
@@ -310,7 +321,7 @@ function validityText(row) {
             </div>
           </div>
           <div class="panel">
-            <div class="phead"><AppIcon name="clock" :size="15" /><span>通行计划</span></div>
+            <div class="phead"><AppIcon name="clock" :size="15" /><span>{{ t('page.access.plan') }}</span></div>
             <div
               v-for="p in store.plans"
               :key="p.id"
@@ -326,19 +337,19 @@ function validityText(row) {
             </div>
           </div>
           <div class="panel">
-            <div class="phead"><AppIcon name="doc" :size="15" /><span>时间参数</span></div>
+            <div class="phead"><AppIcon name="doc" :size="15" /><span>{{ t('page.access.timeParams') }}</span></div>
             <div class="plan-note">{{ selectedPlanText }} · {{ store.selectedPlan?.desc }}</div>
             <div class="time-row">
               <el-input model-value="08:00" size="small" />
-              <span class="to">至</span>
+              <span class="to">~</span>
               <el-input model-value="20:00" size="small" />
             </div>
-            <div class="dw-sub">演示原型：时段参数为示意，正式版按通行计划模板生成</div>
+            <div class="dw-sub">{{ t('page.access.timeNote') }}</div>
           </div>
         </div>
         <div class="step-actions">
-          <el-button size="small" @click="store.prevStep()">上一步</el-button>
-          <el-button type="primary" size="small" @click="next">下一步：选择门禁资源</el-button>
+          <el-button size="small" @click="store.prevStep()">{{ t('common.prev') }}</el-button>
+          <el-button type="primary" size="small" @click="next">{{ t('page.access.nextDoors') }}</el-button>
         </div>
       </template>
 
@@ -347,8 +358,8 @@ function validityText(row) {
         <div class="panel" style="max-width: 660px">
           <div class="phead">
             <AppIcon name="door" :size="15" />
-            <span>选择门禁资源</span>
-            <span class="cnt">（已选 {{ store.doorIds.length }} 个）</span>
+            <span>{{ t('page.access.selectDoors') }}</span>
+            <span class="cnt">{{ t('page.access.selectedDoors', { n: store.doorIds.length }) }}</span>
           </div>
           <div class="door-tree" style="max-height: 340px">
             <OrgTreeNode
@@ -365,8 +376,8 @@ function validityText(row) {
           </div>
         </div>
         <div class="step-actions">
-          <el-button size="small" @click="store.prevStep()">上一步</el-button>
-          <el-button type="primary" size="small" @click="next">下一步：确认并下发</el-button>
+          <el-button size="small" @click="store.prevStep()">{{ t('common.prev') }}</el-button>
+          <el-button type="primary" size="small" @click="next">{{ t('page.access.nextConfirm') }}</el-button>
         </div>
       </template>
 
@@ -374,7 +385,7 @@ function validityText(row) {
       <template v-else>
         <div class="perm-grid">
           <div class="panel">
-            <div class="phead"><AppIcon name="user" :size="15" /><span>授权对象（{{ store.selectedNos.length }} 人）</span></div>
+            <div class="phead"><AppIcon name="user" :size="15" /><span>{{ t('page.access.objectsCount', { n: store.selectedNos.length }) }}</span></div>
             <div v-for="p in store.selectedPersons" :key="p.id" class="recap-row">
               <span class="dw-avatar">{{ p.name[0] }}</span>
               <span>{{ p.name }}</span>
@@ -382,28 +393,28 @@ function validityText(row) {
             </div>
           </div>
           <div class="panel">
-            <div class="phead"><AppIcon name="clock" :size="15" /><span>通行计划</span></div>
+            <div class="phead"><AppIcon name="clock" :size="15" /><span>{{ t('page.access.plan') }}</span></div>
             <div class="plan sel" style="cursor: default">
               <div>
                 <div class="pname">{{ store.selectedPlan?.name }}</div>
                 <div class="pdesc">{{ store.selectedPlan?.desc }}</div>
                 <div class="pdesc">
-                  有效期：{{ store.validity.type === 'long' ? '长期有效' : `${store.validity.from} 至 ${store.validity.to}` }}
+                  {{ t('page.access.planValid', { v: store.validity.type === 'long' ? t('common.longTerm') : `${store.validity.from} ~ ${store.validity.to}` }) }}
                 </div>
               </div>
             </div>
           </div>
           <div class="panel">
-            <div class="phead"><AppIcon name="door" :size="15" /><span>门禁资源（{{ store.selectedDoors.length }} 个）</span></div>
+            <div class="phead"><AppIcon name="door" :size="15" /><span>{{ t('page.access.doorsCount', { n: store.selectedDoors.length }) }}</span></div>
             <div v-for="d in store.selectedDoors" :key="d.id" class="door-row">
               <AppIcon name="door" :size="13" /> {{ d.name }}
             </div>
           </div>
         </div>
         <div class="step-actions">
-          <el-button size="small" @click="store.prevStep()">上一步</el-button>
+          <el-button size="small" @click="store.prevStep()">{{ t('common.prev') }}</el-button>
           <el-button type="primary" size="small" @click="issue">
-            <AppIcon name="check" :size="14" style="margin-right: 5px" />确认并下发
+            <AppIcon name="check" :size="14" style="margin-right: 5px" />{{ t('page.access.confirmIssue') }}
           </el-button>
         </div>
       </template>
@@ -413,23 +424,23 @@ function validityText(row) {
       <div class="dw-card">
         <div class="dw-card__title">
           <AppIcon name="key" :size="15" />
-          已配置权限（当前人员的门禁授权）
+          {{ t('page.access.permTable') }}
         </div>
         <el-table :data="store.permissions" class="compact-table" style="width: 100%">
-          <el-table-column prop="name" label="姓名" width="54" />
-          <el-table-column prop="no" label="工号" width="66" />
-          <el-table-column prop="door" label="门禁点" min-width="118" />
-          <el-table-column prop="plan" label="通行计划" min-width="110" />
-          <el-table-column label="有效期" min-width="82">
+          <el-table-column prop="name" :label="t('page.access.colName')" width="54" />
+          <el-table-column prop="no" :label="t('page.access.colNo')" width="66" />
+          <el-table-column prop="door" :label="t('page.person.colDoor')" min-width="118" />
+          <el-table-column prop="plan" :label="t('page.access.colPlan')" min-width="110" />
+          <el-table-column :label="t('page.access.colValidity')" min-width="82">
             <template #default="{ row }">{{ validityText(row) }}</template>
           </el-table-column>
-          <el-table-column label="状态" width="62">
+          <el-table-column :label="t('page.access.colStatus')" width="62">
             <template #default="{ row }"><StatusTag :text="row.status" /></template>
           </el-table-column>
-          <el-table-column label="操作" width="82">
+          <el-table-column :label="t('page.access.colOps')" width="82">
             <template #default="{ row }">
-              <span class="dw-link" @click="todo('变更')">变更</span>
-              <span class="dw-link danger" @click="revoke(row)">撤销</span>
+              <span class="dw-link" @click="todo(t('page.access.changeMsg'))">{{ t('page.access.changeAction') }}</span>
+              <span class="dw-link danger" @click="revoke(row)">{{ t('page.access.revoke') }}</span>
             </template>
           </el-table-column>
         </el-table>
@@ -438,17 +449,17 @@ function validityText(row) {
       <div class="dw-card">
         <div class="dw-card__title">
           <AppIcon name="doc" :size="15" />
-          权限下发记录（最近 5 条）
-          <span class="more" @click="todo('查看更多')">查看更多 ›</span>
+          {{ t('page.access.recordTable') }}
+          <span class="more" @click="todo(t('page.access.moreMsg'))">{{ t('page.access.viewMore') }}</span>
         </div>
         <el-table :data="store.records.slice(0, 5)" class="compact-table" style="width: 100%">
-          <el-table-column prop="time" label="下发时间" width="116" class-name="nowrap-cell" />
-          <el-table-column prop="target" label="下发对象" min-width="96" show-overflow-tooltip />
-          <el-table-column prop="doors" label="门禁点数量" width="80" />
-          <el-table-column label="结果" width="84">
+          <el-table-column prop="time" :label="t('page.access.colIssueTime')" width="116" class-name="nowrap-cell" />
+          <el-table-column prop="target" :label="t('page.access.colTarget')" min-width="96" show-overflow-tooltip />
+          <el-table-column prop="doors" :label="t('page.access.colDoorCount')" width="80" />
+          <el-table-column :label="t('page.access.colResult')" width="84">
             <template #default="{ row }">
               <span style="color: #18a058">
-                <AppIcon name="check" :size="12" /> {{ row.result }}
+                <AppIcon name="check" :size="12" /> {{ resultLabel(row.result) }}
               </span>
             </template>
           </el-table-column>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import PageTabs from '@/components/PageTabs.vue'
@@ -11,6 +12,20 @@ import { useDeviceStore } from '@/stores/device'
 
 const router = useRouter()
 const store = useDeviceStore()
+const { t } = useI18n()
+
+const DEVICE_TYPE_KEYS = { 网络摄像机: 'camera', 门禁一体机: 'doorDevice', 存储NVR: 'nvr', 网络交换机: 'switch' }
+const STAT_KEYS = { video: 'statVideo', door: 'statDoor', nvr: 'statNvr', network: 'statNetwork' }
+
+function typeLabel(value) {
+  return t(`deviceTypes.${DEVICE_TYPE_KEYS[value] || 'camera'}`)
+}
+function statLabel(key) {
+  return t(`page.device.${STAT_KEYS[key] || 'statVideo'}`)
+}
+function statusLabel(value) {
+  return t(`status.${value === '在线' ? 'online' : 'offline'}`)
+}
 const detailOpen = ref(true)
 const narrow = ref(false)
 let mq = null
@@ -20,13 +35,13 @@ function onMqChange(e) {
   detailOpen.value = !e.matches
 }
 
-const deviceTabs = [
-  { label: '设备总览', value: '' },
-  { label: '视频设备', value: '网络摄像机' },
-  { label: '门禁设备', value: '门禁一体机' },
-  { label: '存储设备', value: '存储NVR' },
-  { label: '网络设备', value: '网络交换机' }
-]
+const deviceTabs = computed(() => [
+  { label: t('menu.device.overview'), value: '' },
+  { label: t('page.device.tabVideo'), value: '网络摄像机' },
+  { label: t('page.device.tabDoor'), value: '门禁一体机' },
+  { label: t('page.device.tabStorage'), value: '存储NVR' },
+  { label: t('page.device.tabNetwork'), value: '网络交换机' }
+])
 
 const typeIcon = {
   网络摄像机: 'cam',
@@ -64,7 +79,7 @@ function onSelectOrg(node) {
 
 function preview(device) {
   if (!device?.channel) {
-    ElMessage.warning('该设备类型不支持实时预览')
+    ElMessage.warning(t('page.device.notSupport'))
     return
   }
   router.push({ path: '/video/live', query: { channel: device.channel } })
@@ -76,7 +91,7 @@ function selectDevice(row) {
 }
 
 function todo(name) {
-  ElMessage.info(`「${name}」为演示占位功能`)
+  ElMessage.info(t('page.device.demo', { name }))
 }
 
 const statusTab = ref('basic')
@@ -84,17 +99,17 @@ const statusTab = ref('basic')
 
 <template>
   <div class="device-page">
-    <PageHeader title="设备总览" subtitle="视频 / 门禁 / 存储 / 网络设备统一接入与运维">
+    <PageHeader :title="t('menu.device.overview')" :subtitle="t('page.device.subtitle')">
       <PageTabs :tabs="deviceTabs" :model-value="store.typeTab" @change="store.setType" />
     </PageHeader>
 
     <div class="device-layout" :class="{ 'no-detail': !detailOpen }">
       <div class="dw-card tree-card">
         <OrgTreePanel
-          title="组织资源"
+          :title="t('page.device.orgTitle')"
           :data="store.tree ? [store.tree] : []"
           :selected-key="selectedOrgId"
-          search-placeholder="请输入组织/仓点名称"
+          :search-placeholder="t('page.device.orgSearch')"
           @select="onSelectOrg"
         />
       </div>
@@ -106,11 +121,11 @@ const statusTab = ref('basic')
               <AppIcon :name="s.icon" :size="22" />
             </div>
             <div>
-              <div class="dw-stat__label">{{ s.label }}</div>
+              <div class="dw-stat__label">{{ statLabel(s.key) }}</div>
               <div class="dw-stat__num">{{ s.value }}</div>
               <div class="stat-dots">
-                <span class="down">● 在线 {{ s.online }}</span>
-                <span class="flat">● 离线 {{ s.offline }}</span>
+                <span class="down">● {{ t('page.device.onlineShort') }} {{ s.online }}</span>
+                <span class="flat">● {{ t('page.device.offlineShort') }} {{ s.offline }}</span>
               </div>
             </div>
           </div>
@@ -118,27 +133,27 @@ const statusTab = ref('basic')
 
         <div class="dw-card list-card">
           <div class="dw-toolbar">
-            <el-button type="primary" size="small" @click="todo('添加设备')">
-              <AppIcon name="add" :size="14" style="margin-right: 5px" />添加设备
+            <el-button type="primary" size="small" @click="todo(t('page.device.addDevice'))">
+              <AppIcon name="add" :size="14" style="margin-right: 5px" />{{ t('page.device.addDevice') }}
             </el-button>
-            <el-button size="small" @click="todo('批量操作')">
-              <AppIcon name="list" :size="14" style="margin-right: 5px" />批量操作
+            <el-button size="small" @click="todo(t('page.device.batch'))">
+              <AppIcon name="list" :size="14" style="margin-right: 5px" />{{ t('page.device.batch') }}
             </el-button>
-            <el-button size="small" @click="todo('设备配置')">
-              <AppIcon name="gear" :size="14" style="margin-right: 5px" />设备配置
+            <el-button size="small" @click="todo(t('page.device.config'))">
+              <AppIcon name="gear" :size="14" style="margin-right: 5px" />{{ t('page.device.config') }}
             </el-button>
-            <el-button size="small" @click="todo('远程维护')">
-              <AppIcon name="wrench" :size="14" style="margin-right: 5px" />远程维护
+            <el-button size="small" @click="todo(t('page.device.maintain'))">
+              <AppIcon name="wrench" :size="14" style="margin-right: 5px" />{{ t('page.device.maintain') }}
             </el-button>
-            <el-button size="small" @click="todo('导出')">
-              <AppIcon name="export" :size="14" style="margin-right: 5px" />导出
+            <el-button size="small" @click="todo(t('page.device.export'))">
+              <AppIcon name="export" :size="14" style="margin-right: 5px" />{{ t('page.device.export') }}
             </el-button>
             <span class="grow" />
             <div class="dw-search" style="width: 190px">
               <el-input
                 :model-value="store.keyword"
                 size="small"
-                placeholder="设备名称 / IP / 序列号"
+                :placeholder="t('page.device.searchPlaceholder')"
                 clearable
                 @update:model-value="store.setKeyword"
                 @keyup.enter="store.loadList()"
@@ -153,7 +168,7 @@ const statusTab = ref('basic')
 
           <el-table :data="store.list" v-loading="store.loading" class="compact-table device-table" style="width: 100%; margin-top: 10px">
             <el-table-column type="selection" width="24" />
-            <el-table-column label="设备名称" width="136">
+            <el-table-column :label="t('page.device.colName')" width="136">
               <template #default="{ row }">
                 <span class="dev-name" @click="selectDevice(row)">
                   <AppIcon :name="typeIcon[row.type] || 'device'" :size="14" style="color: #5a6b85" />
@@ -161,28 +176,30 @@ const statusTab = ref('basic')
                 </span>
               </template>
             </el-table-column>
-            <el-table-column prop="type" label="设备类型" width="68" />
-            <el-table-column prop="orgName" label="所属仓点" width="110" show-overflow-tooltip />
-            <el-table-column prop="ip" label="IP地址" width="92" />
-            <el-table-column label="状态" width="46">
+            <el-table-column :label="t('page.device.colType')" width="68">
+              <template #default="{ row }">{{ typeLabel(row.type) }}</template>
+            </el-table-column>
+            <el-table-column prop="orgName" :label="t('page.device.colOrg')" width="106" show-overflow-tooltip />
+            <el-table-column prop="ip" :label="t('page.device.colIp')" width="92" />
+            <el-table-column :label="t('page.device.colStatus')" width="46">
               <template #default="{ row }">
                 <StatusTag :text="row.status" />
               </template>
             </el-table-column>
-            <el-table-column prop="model" label="型号" width="104" />
-            <el-table-column label="操作" width="106" fixed="right">
+            <el-table-column prop="model" :label="t('page.device.colModel')" width="100" />
+            <el-table-column :label="t('common.actions')" width="116" fixed="right">
               <template #default="{ row }">
                 <span class="ops-links">
-                  <span class="dw-link" @click.stop="preview(row)">预览</span>
-                  <span class="dw-link" @click.stop="todo('远程配置')">配置</span>
-                  <span class="dw-link" @click.stop="selectDevice(row)">更多</span>
+                  <span class="dw-link" @click.stop="preview(row)">{{ t('page.device.preview') }}</span>
+                  <span class="dw-link" @click.stop="todo(t('page.device.remoteConfig'))">{{ t('common.config') }}</span>
+                  <span class="dw-link" @click.stop="selectDevice(row)">{{ t('common.more') }}</span>
                 </span>
               </template>
             </el-table-column>
           </el-table>
 
           <div class="table-foot">
-            <span class="dw-sub">共 {{ store.total }} 条</span>
+            <span class="dw-sub">{{ t('common.total', { n: store.total }) }}</span>
             <el-pagination
               background
               layout="prev, pager, next, sizes"
@@ -201,7 +218,7 @@ const statusTab = ref('basic')
       <div v-if="narrow && detailOpen" class="detail-backdrop" @click="detailOpen = false" />
       <div v-if="detailOpen" class="dw-card detail-card">
         <div class="detail-head">
-          <span class="detail-title">设备详情</span>
+          <span class="detail-title">{{ t('page.device.detailTitle') }}</span>
           <span class="detail-close" @click="detailOpen = false"><AppIcon name="close" :size="15" /></span>
         </div>
         <template v-if="store.current">
@@ -211,23 +228,23 @@ const statusTab = ref('basic')
             </div>
             <div class="detail-hero__name">{{ store.current.name }}</div>
             <div class="detail-hero__type">
-              {{ store.current.type }}
+              {{ typeLabel(store.current.type) }}
               <StatusTag :text="store.current.status" style="margin-left: 6px" />
             </div>
           </div>
           <div class="dw-tabs detail-tabs">
-            <div class="dw-tab" :class="{ 'is-active': statusTab === 'basic' }" @click="statusTab = 'basic'">基本信息</div>
-            <div class="dw-tab" :class="{ 'is-active': statusTab === 'run' }" @click="statusTab = 'run'">运行状态</div>
+            <div class="dw-tab" :class="{ 'is-active': statusTab === 'basic' }" @click="statusTab = 'basic'">{{ t('page.device.basic') }}</div>
+            <div class="dw-tab" :class="{ 'is-active': statusTab === 'run' }" @click="statusTab = 'run'">{{ t('page.device.run') }}</div>
           </div>
           <template v-if="statusTab === 'basic'">
             <div v-for="item in [
-              { k: '所属仓点', v: store.current.orgName },
-              { k: '设备型号', v: store.current.model },
-              { k: '序列号', v: store.current.sn },
-              { k: 'IP 地址', v: store.current.ip },
-              { k: '接入时间', v: store.current.installedAt },
-              { k: '固件版本', v: store.current.firmware },
-              { k: '安装位置', v: store.current.location }
+              { k: t('page.device.fieldOrg'), v: store.current.orgName },
+              { k: t('page.device.fieldModel'), v: store.current.model },
+              { k: t('page.device.fieldSn'), v: store.current.sn },
+              { k: t('page.device.fieldIp'), v: store.current.ip },
+              { k: t('page.device.fieldAccess'), v: store.current.installedAt },
+              { k: t('page.device.fieldFirmware'), v: store.current.firmware },
+              { k: t('page.device.fieldLocation'), v: store.current.location }
             ]" :key="item.k" class="detail-field">
               <span class="k">{{ item.k }}</span>
               <span class="v">{{ item.v }}</span>
@@ -235,12 +252,12 @@ const statusTab = ref('basic')
           </template>
           <template v-else>
             <div v-for="item in [
-              { k: '设备状态', v: '在线 · 心跳正常' },
-              { k: 'CPU 使用率', v: '23%' },
-              { k: '内存使用率', v: '41%' },
-              { k: '码流状态', v: '主码流 2048 Kbps' },
-              { k: '已运行时长', v: '37 天 6 小时' },
-              { k: '最近巡检', v: '2025-01-08 09:00' }
+              { k: t('page.device.fieldStatus'), v: t('page.device.runStatus') },
+              { k: t('page.device.cpu'), v: '23%' },
+              { k: t('page.device.memory'), v: '41%' },
+              { k: t('page.device.stream'), v: `${t('page.video.mainStream')} 2048 Kbps` },
+              { k: t('page.device.uptime'), v: t('page.device.uptimeValue') },
+              { k: t('page.device.lastPatrol'), v: '2025-01-08 09:00' }
             ]" :key="item.k" class="detail-field">
               <span class="k">{{ item.k }}</span>
               <span class="v">{{ item.v }}</span>
@@ -250,19 +267,19 @@ const statusTab = ref('basic')
           <div class="detail-actions">
             <div class="detail-action" @click="preview(store.current)">
               <AppIcon name="play" :size="18" />
-              <span>实时预览</span>
+              <span>{{ t('page.device.viewLive') }}</span>
             </div>
-            <div class="detail-action" @click="todo('录像回放')">
+            <div class="detail-action" @click="todo(t('page.device.playback'))">
               <AppIcon name="rec" :size="18" />
-              <span>录像回放</span>
+              <span>{{ t('page.device.playback') }}</span>
             </div>
-            <div class="detail-action" @click="todo('远程配置')">
+            <div class="detail-action" @click="todo(t('page.device.remoteConfig'))">
               <AppIcon name="ptz" :size="18" />
-              <span>远程配置</span>
+              <span>{{ t('page.device.remoteConfig') }}</span>
             </div>
           </div>
         </template>
-        <div v-else class="dw-empty">请选择设备查看详情</div>
+        <div v-else class="dw-empty">{{ t('page.device.empty') }}</div>
       </div>
     </div>
   </div>
@@ -369,6 +386,14 @@ const statusTab = ref('basic')
 .device-table :deep(.status-tag) {
   padding: 0 6px;
   font-size: 10.5px;
+}
+
+.device-table :deep(.dw-link) {
+  font-size: 11px;
+}
+
+.device-table .ops-links .dw-link + .dw-link {
+  margin-left: 6px;
 }
 
 .dev-name {

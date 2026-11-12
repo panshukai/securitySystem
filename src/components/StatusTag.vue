@@ -1,5 +1,8 @@
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   text: { type: String, default: '' },
@@ -28,11 +31,35 @@ const TONES = {
   异常: 'red'
 }
 
+const STATUS_KEYS = {
+  待处置: 'pending',
+  处置中: 'processing',
+  已处置: 'done',
+  在线: 'online',
+  离线: 'offline',
+  已生效: 'effective',
+  在职: 'active',
+  临时: 'temporary',
+  停用: 'disabled',
+  启用: 'enabled',
+  下发成功: 'issued',
+  高: 'high',
+  中: 'medium',
+  低: 'low',
+  正常: 'normal',
+  异常: 'abnormal',
+  待采集: 'waiting'
+}
+
 const finalTone = computed(() => props.tone || TONES[props.text] || 'gray')
+const label = computed(() => {
+  const key = STATUS_KEYS[props.text]
+  return key ? t(`status.${key}`) : props.text
+})
 </script>
 
 <template>
-  <span class="status-tag" :class="`is-${finalTone}`">{{ text }}</span>
+  <span class="status-tag" :class="`is-${finalTone}`">{{ label }}</span>
 </template>
 
 <style scoped lang="less">

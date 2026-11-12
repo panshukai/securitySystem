@@ -1,11 +1,13 @@
 <script setup>
 import { computed, reactive, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import AppIcon from '@/components/AppIcon.vue'
 import { moduleOfPath } from '@/menu/menu.config'
 
 const route = useRoute()
 const router = useRouter()
+const { t, te } = useI18n()
 
 const mod = computed(() => moduleOfPath(route.path))
 const openMap = reactive({})
@@ -44,6 +46,15 @@ function toggle(item) {
 function go(path) {
   if (path && route.path !== path) router.push(path)
 }
+
+function label(item) {
+  if (item.labelKey && te(item.labelKey)) return t(item.labelKey)
+  if (item.path) {
+    const key = `menu.${item.path.replace(/^\//, '').replace(/\//g, '.')}`
+    if (te(key)) return t(key)
+  }
+  return item.title
+}
 </script>
 
 <template>
@@ -56,12 +67,12 @@ function go(path) {
         @click="go(item.path)"
       >
         <AppIcon :name="item.icon || 'doc'" :size="16" />
-        <span>{{ item.title }}</span>
+        <span>{{ label(item) }}</span>
       </div>
       <template v-else>
         <div class="sidebar__item sidebar__group" @click="toggle(item)">
           <AppIcon :name="item.icon || 'folder'" :size="16" />
-          <span>{{ item.title }}</span>
+          <span>{{ label(item) }}</span>
           <span v-if="item.badge" class="sidebar__dot" />
           <span class="sidebar__caret" :class="{ 'is-open': openMap[item.title] }">
             <AppIcon name="chevD" :size="13" />
@@ -75,7 +86,7 @@ function go(path) {
             :class="{ 'is-active': isActive(child.path) }"
             @click="go(child.path)"
           >
-            {{ child.title }}
+            {{ label(child) }}
           </div>
         </div>
       </template>

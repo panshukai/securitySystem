@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import PageHeader from '@/components/PageHeader.vue'
 import AppIcon from '@/components/AppIcon.vue'
@@ -13,27 +14,44 @@ import { getOrgOptions } from '@/api'
 
 const router = useRouter()
 const store = useEventStore()
+const { t } = useI18n()
 
-const orgOptions = ref([{ label: '全部组织', value: '' }])
-const typeOptions = [
-  { label: '全部事件', value: '' },
-  { label: '门禁事件', value: '门禁事件' },
-  { label: '视频告警', value: '视频告警' },
-  { label: '设备异常', value: '设备异常' },
-  { label: '人员事件', value: '人员事件' },
-  { label: '其他事件', value: '其他事件' }
-]
-const levelOptions = [
-  { label: '全部等级', value: '' },
-  { label: '高', value: '高' },
-  { label: '中', value: '中' },
-  { label: '低', value: '低' }
-]
-const rangeOptions = [
-  { label: '最近7天', value: 'last7' },
-  { label: '最近30天', value: 'last30' },
-  { label: '自定义', value: 'custom' }
-]
+const rawOrgOptions = ref([{ label: '', value: '' }])
+const orgOptions = computed(() => rawOrgOptions.value.map((o, i) => (i === 0 ? { ...o, label: t('page.event.allOrgs') } : o)))
+
+const EVENT_TYPE_KEYS = { 门禁事件: 'access', 视频告警: 'video', 设备异常: 'device', 人员事件: 'person', 其他事件: 'other' }
+const LEVEL_KEYS = { 高: 'high', 中: 'medium', 低: 'low' }
+const STATUS_KEYS = { 待处置: 'pending', 处置中: 'processing', 已处置: 'done' }
+const STAT_KEYS = { total: 'totalEvents', pending: 'pending', processing: 'processing', done: 'done', major: 'major' }
+
+function typeLabel(value) {
+  return t(`eventTypes.${EVENT_TYPE_KEYS[value] || 'other'}`)
+}
+function levelLabel(value) {
+  return t(`status.${LEVEL_KEYS[value] || 'low'}`)
+}
+function statusLabel(value) {
+  return t(`status.${STATUS_KEYS[value] || 'pending'}`)
+}
+function statLabel(key) {
+  return t(`page.event.${STAT_KEYS[key] || 'totalEvents'}`)
+}
+
+const typeOptions = computed(() => [
+  { label: t('page.event.allEvents'), value: '' },
+  ...Object.keys(EVENT_TYPE_KEYS).map((value) => ({ label: typeLabel(value), value }))
+])
+const levelOptions = computed(() => [
+  { label: t('page.event.allLevels'), value: '' },
+  { label: t('status.high'), value: '高' },
+  { label: t('status.medium'), value: '中' },
+  { label: t('status.low'), value: '低' }
+])
+const rangeOptions = computed(() => [
+  { label: t('page.event.last7'), value: 'last7' },
+  { label: t('page.event.last30'), value: 'last30' },
+  { label: t('page.event.customRange'), value: 'custom' }
+])
 
 const typeIcon = {
   门禁事件: 'door',
@@ -52,7 +70,7 @@ const detail = computed(() => store.detail)
 
 onMounted(async () => {
   await Promise.all([store.loadAll(), store.loadList()])
-  orgOptions.value = await getOrgOptions()
+  rawOrgOptions.value = await getOrgOptions()
 })
 
 async function openDetail(row) {
@@ -78,7 +96,12 @@ async function submitDeal() {
   try {
     await store.submitDeal(detail.value.id, { result: dealForm.result, note: dealForm.note })
     dealVisible.value = false
-    const msg = dealForm.result === 'false' ? '已按误报关闭' : dealForm.result === 'ticket' ? '已转工单并标记处置完成' : '处置完成，状态已更新为「已处置」'
+    const msg =
+      dealForm.result === 'false'
+        ? t('page.event.msgFalse')
+        : dealForm.result === 'ticket'
+          ? t('page.event.msgTicket')
+          : t('page.event.msgDeal')
     ElMessage.success(msg)
   } finally {
     submitting.value = false
@@ -91,13 +114,13 @@ function quickGo(path) {
 
 function onQuery() {
   store.loadList()
-  ElMessage.success('已按当前条件查询')
+  ElMessage.success(t('page.event.msgQuery'))
 }
 </script>
 
 <template>
   <div class="event-page">
-    <PageHeader title="事件中心" subtitle="集中监测、统一处置、闭环管理" />
+    <PageHeader :title="t('page.event.title')" :subtitle="t('page.event.subtitle')" />
 
     <div class="event-layout">
       <div class="event-main">
@@ -107,13 +130,13 @@ function onQuery() {
               <AppIcon :name="s.icon" :size="22" />
             </div>
             <div>
-              <div class="dw-stat__label">{{ s.label }}</div>
+              <div class="dw-stat__label">{{ statLabel(s.key) }}</div>
               <div class="dw-stat__num">{{ s.value }}</div>
               <div class="dw-stat__delta">
                 <span :class="s.dir === 'up' ? 'up' : 'down'">
                   {{ s.dir === 'up' ? '▲' : '▼' }} {{ s.delta }}
                 </span>
-                <span class="flat"> 较昨日</span>
+                <span class="flat"> {{ t('page.event.vsYesterday') }}</span>
               </div>
             </div>
           </div>
@@ -121,17 +144,17 @@ function onQuery() {
 
         <div class="chart-row">
           <div class="dw-card chart-card">
-            <div class="dw-card__title">事件趋势分析（近7天）</div>
+            <div class="dw-card__title">{{ t('page.event.trend') }}</div>
             <TrendChart :data="store.trend.data" :labels="store.trend.labels" :height="190" />
           </div>
           <div class="dw-card chart-card">
-            <div class="dw-card__title">事件类型分布</div>
+            <div class="dw-card__title">{{ t('page.event.typeDist') }}</div>
             <div class="donut-wrap">
-              <DonutChart :data="store.donut" total="1,286" :height="150" />
+              <DonutChart :data="store.donut" total="1,286" :center-label="t('page.event.totalEvents')" :height="150" />
               <div class="donut-legend">
                 <div v-for="d in store.donut" :key="d.name" class="donut-legend__row">
                   <span class="dw-dot" :style="{ background: d.color }" />
-                  <span class="donut-legend__name">{{ d.name }}</span>
+                  <span class="donut-legend__name">{{ typeLabel(d.name) }}</span>
                   <span class="donut-legend__pct">{{ d.percent }}%</span>
                 </div>
               </div>
@@ -141,41 +164,41 @@ function onQuery() {
 
         <div class="dw-card filter-card">
           <div class="filter-row">
-            <span class="filter-label">事件类型：</span>
+            <span class="filter-label">{{ t('page.event.filterType') }}:</span>
             <el-select
               :model-value="store.filters.type"
               size="small"
-              placeholder="全部事件"
+              :placeholder="t('page.event.allEvents')"
               style="width: 88px"
               @update:model-value="(v) => store.setFilter('type', v)"
             >
               <el-option v-for="o in typeOptions" :key="o.value" :label="o.label" :value="o.value" />
             </el-select>
-            <span class="filter-label">事件等级：</span>
+            <span class="filter-label">{{ t('page.event.filterLevel') }}:</span>
             <el-select
               :model-value="store.filters.level"
               size="small"
-              placeholder="全部等级"
+              :placeholder="t('page.event.allLevels')"
               style="width: 94px"
               @update:model-value="(v) => store.setFilter('level', v)"
             >
               <el-option v-for="o in levelOptions" :key="o.value" :label="o.label" :value="o.value" />
             </el-select>
-            <span class="filter-label">所属组织：</span>
+            <span class="filter-label">{{ t('page.event.filterOrg') }}:</span>
             <el-select
               :model-value="store.filters.orgName"
               size="small"
-              placeholder="全部组织"
+              :placeholder="t('page.event.allOrgs')"
               style="width: 112px"
               @update:model-value="(v) => store.setFilter('orgName', v)"
             >
               <el-option v-for="o in orgOptions" :key="o.value" :label="o.label" :value="o.value" />
             </el-select>
-            <span class="filter-label">发生时间：</span>
+            <span class="filter-label">{{ t('page.event.filterTime') }}:</span>
             <el-select
               :model-value="store.filters.range"
               size="small"
-              placeholder="最近7天"
+              :placeholder="t('page.event.last7')"
               style="width: 88px"
               @update:model-value="(v) => store.setFilter('range', v)"
             >
@@ -183,8 +206,8 @@ function onQuery() {
             </el-select>
             <span class="filter-grow" />
             <span class="filter-btns">
-              <el-button type="primary" size="small" @click="onQuery">查询</el-button>
-              <el-button size="small" @click="store.resetFilters()">重置</el-button>
+              <el-button type="primary" size="small" @click="onQuery">{{ t('common.search') }}</el-button>
+              <el-button size="small" @click="store.resetFilters()">{{ t('common.reset') }}</el-button>
             </span>
           </div>
         </div>
@@ -192,40 +215,40 @@ function onQuery() {
         <div class="dw-card table-card">
           <el-table :data="store.list" v-loading="store.loading" class="compact-table" style="width: 100%">
             <el-table-column type="selection" width="24" />
-            <el-table-column prop="time" label="发生时间 ↓" width="120" class-name="nowrap-cell" />
-            <el-table-column label="事件类型" width="88">
+            <el-table-column prop="time" :label="`${t('page.event.colTime')} ↓`" width="120" class-name="nowrap-cell" />
+            <el-table-column :label="t('page.event.colType')" width="88">
               <template #default="{ row }">
                 <span class="type-cell">
                   <AppIcon :name="typeIcon[row.type] || 'warn'" :size="14" style="color: #1a66ff" />
-                  {{ row.type }}
+                  {{ typeLabel(row.type) }}
                 </span>
               </template>
             </el-table-column>
-            <el-table-column label="事件等级" width="66">
+            <el-table-column :label="t('page.event.colLevel')" width="64">
               <template #default="{ row }">
                 <StatusTag :text="row.level" />
               </template>
             </el-table-column>
-            <el-table-column prop="desc" label="事件描述" min-width="100" show-overflow-tooltip />
-            <el-table-column prop="orgName" label="所属组织" min-width="100" class-name="nowrap-cell" show-overflow-tooltip />
-            <el-table-column label="处置状态" width="70">
+            <el-table-column prop="desc" :label="t('page.event.colDesc')" min-width="92" show-overflow-tooltip />
+            <el-table-column prop="orgName" :label="t('page.event.colOrg')" min-width="92" class-name="nowrap-cell" show-overflow-tooltip />
+            <el-table-column :label="t('page.event.colStatus')" width="68">
               <template #default="{ row }">
                 <StatusTag :text="row.status" />
               </template>
             </el-table-column>
-            <el-table-column prop="handler" label="处置人" width="52" />
-            <el-table-column label="操作" width="84" fixed="right">
+            <el-table-column prop="handler" :label="t('page.event.colHandlerShort')" width="52" />
+            <el-table-column :label="t('common.actions')" width="104" fixed="right">
               <template #default="{ row }">
                 <span class="ops-links">
-                  <span v-if="row.status !== '已处置'" class="dw-link" @click.stop="openDeal(row)">处置</span>
-                  <span class="dw-link" @click.stop="openDetail(row)">详情</span>
+                  <span v-if="row.status !== '已处置'" class="dw-link" @click.stop="openDeal(row)">{{ t('page.event.deal') }}</span>
+                  <span class="dw-link" @click.stop="openDetail(row)">{{ t('common.detail') }}</span>
                 </span>
               </template>
             </el-table-column>
           </el-table>
 
           <div class="table-foot">
-            <span class="dw-sub">共 {{ store.total }} 条</span>
+            <span class="dw-sub">{{ t('common.total', { n: store.total }) }}</span>
             <el-pagination
               background
               layout="prev, pager, next, sizes"
@@ -244,8 +267,8 @@ function onQuery() {
       <aside class="event-aside">
         <div class="dw-card">
           <div class="dw-card__title">
-            实时告警
-            <span class="more" @click="quickGo('/event/alarm')">更多 ›</span>
+            {{ t('page.event.realtime') }}
+            <span class="more" @click="quickGo('/event/alarm')">{{ t('page.event.more') }}</span>
           </div>
           <div
             v-for="a in store.alerts"
@@ -265,99 +288,99 @@ function onQuery() {
         </div>
 
         <div class="dw-card overview-card">
-          <div class="dw-card__title">事件处置概览（今日）</div>
+          <div class="dw-card__title">{{ t('page.event.overview') }}</div>
           <div class="overview-body">
             <RingProgress :percent="store.overview.rate" color="#18a058" :height="86" />
             <div class="overview-list">
               <div class="overview-row">
-                <span><AppIcon name="clock" :size="14" style="color: #f08c00" /> 平均处置时长</span>
-                <b>{{ store.overview.avgMinutes }} 分钟</b>
+                <span><AppIcon name="clock" :size="14" style="color: #f08c00" /> {{ t('page.event.avg') }}</span>
+                <b>{{ t('page.event.minutes', { n: store.overview.avgMinutes }) }}</b>
               </div>
               <div class="overview-row">
-                <span><AppIcon name="warn" :size="14" style="color: #e23c3c" /> 超时事件</span>
-                <b class="danger">{{ store.overview.overdue }} 件</b>
+                <span><AppIcon name="warn" :size="14" style="color: #e23c3c" /> {{ t('page.event.overdue') }}</span>
+                <b class="danger">{{ t('page.event.items', { n: store.overview.overdue }) }}</b>
               </div>
             </div>
           </div>
         </div>
 
         <div class="dw-card">
-          <div class="dw-card__title">快捷操作</div>
+          <div class="dw-card__title">{{ t('page.event.quick') }}</div>
           <div class="quick-grid">
             <div class="quick-item" @click="quickGo('/event/query')">
               <AppIcon name="search" :size="20" />
-              <span>事件查询</span>
+              <span>{{ t('page.event.quickQuery') }}</span>
             </div>
             <div class="quick-item" @click="quickGo('/event/ticket')">
               <AppIcon name="doc" :size="20" />
-              <span>新建工单</span>
+              <span>{{ t('page.event.newTicket') }}</span>
             </div>
             <div class="quick-item" @click="quickGo('/event/flow')">
               <AppIcon name="flow" :size="20" />
-              <span>处置流程</span>
+              <span>{{ t('page.event.flow') }}</span>
             </div>
             <div class="quick-item" @click="quickGo('/event/linkage')">
               <AppIcon name="link" :size="20" />
-              <span>联动配置</span>
+              <span>{{ t('page.event.linkage') }}</span>
             </div>
           </div>
         </div>
       </aside>
     </div>
 
-    <el-dialog v-model="detailVisible" title="事件详情" width="460px">
+    <el-dialog v-model="detailVisible" :title="t('page.event.detailTitle')" width="460px">
       <div v-loading="store.detailLoading">
         <template v-if="detail">
           <div v-for="item in [
-            { k: '事件编号', v: detail.code },
-            { k: '发生时间', v: detail.time },
-            { k: '事件类型', v: detail.type },
-            { k: '事件等级', v: detail.level },
-            { k: '事件描述', v: detail.desc },
-            { k: '所属组织', v: detail.orgName },
-            { k: '处置状态', v: detail.status },
-            { k: '处置人', v: detail.handler }
+            { k: t('page.event.code'), v: detail.code },
+            { k: t('page.event.time'), v: detail.time },
+            { k: t('page.event.type'), v: typeLabel(detail.type) },
+            { k: t('page.event.level'), v: levelLabel(detail.level) },
+            { k: t('page.event.desc'), v: detail.desc },
+            { k: t('page.event.org'), v: detail.orgName },
+            { k: t('page.event.statusLabel'), v: statusLabel(detail.status) },
+            { k: t('page.event.handler'), v: detail.handler }
           ]" :key="item.k" class="modal-row">
             <span class="modal-key">{{ item.k }}</span>
             <span class="modal-val">{{ item.v }}</span>
           </div>
           <div class="modal-row">
-            <span class="modal-key">关联视频</span>
+            <span class="modal-key">{{ t('page.event.relatedVideo') }}</span>
             <span class="modal-val">
-              <span class="dw-link" @click="router.push('/video/live')">查看实时预览 ›</span>
+              <span class="dw-link" @click="router.push('/video/live')">{{ t('page.event.viewLive') }}</span>
             </span>
           </div>
         </template>
       </div>
       <template #footer>
-        <el-button @click="detailVisible = false">关闭</el-button>
-        <el-button v-if="detail && detail.status !== '已处置'" type="primary" @click="openDealFromDetail">立即处置</el-button>
+        <el-button @click="detailVisible = false">{{ t('common.close') }}</el-button>
+        <el-button v-if="detail && detail.status !== '已处置'" type="primary" @click="openDealFromDetail">{{ t('page.event.dealNow') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="dealVisible" title="事件处置" width="440px">
+    <el-dialog v-model="dealVisible" :title="t('page.event.dealTitle')" width="440px">
       <template v-if="detail">
         <div class="modal-row">
-          <span class="modal-key">事件描述</span>
+          <span class="modal-key">{{ t('page.event.desc') }}</span>
           <span class="modal-val">{{ detail.desc }}（{{ detail.orgName }}）</span>
         </div>
-        <div class="dialog-label">处置结果</div>
+        <div class="dialog-label">{{ t('page.event.dealResult') }}</div>
         <el-radio-group v-model="dealForm.result">
-          <el-radio value="confirm">确认处置</el-radio>
-          <el-radio value="false">误报关闭</el-radio>
-          <el-radio value="ticket">转工单</el-radio>
+          <el-radio value="confirm">{{ t('page.event.confirmDeal') }}</el-radio>
+          <el-radio value="false">{{ t('page.event.falseAlarm') }}</el-radio>
+          <el-radio value="ticket">{{ t('page.event.toTicket') }}</el-radio>
         </el-radio-group>
-        <div class="dialog-label">处置备注</div>
+        <div class="dialog-label">{{ t('page.event.dealNote') }}</div>
         <el-input
           v-model="dealForm.note"
           type="textarea"
           :rows="3"
-          placeholder="填写处置说明（演示）"
+          :placeholder="t('page.event.dealNotePlaceholder')"
         />
       </template>
       <template #footer>
-        <el-button @click="dealVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" @click="submitDeal">提交</el-button>
+        <el-button @click="dealVisible = false">{{ t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="submitting" @click="submitDeal">{{ t('common.submit') }}</el-button>
       </template>
     </el-dialog>
   </div>

@@ -59,7 +59,8 @@ const ICONS = {
   phone: '<path d="M5 3h4l2 5-2.5 1.5a12 12 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/>',
   idcard: '<rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5 16c.5-1.6 1.6-2.4 3-2.4s2.5.8 3 2.4M14 9h5M14 13h5"/>',
   facescan: '<path d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3"/><circle cx="9.5" cy="10" r="1"/><circle cx="14.5" cy="10" r="1"/><path d="M9 15c.8.8 1.8 1.2 3 1.2s2.2-.4 3-1.2"/>',
-  building: '<path d="M4 21V4h10v17M14 9h6v12M7 7h4M7 11h4M7 15h4M17 12h1M17 16h1"/>'
+  building: '<path d="M4 21V4h10v17M14 9h6v12M7 7h4M7 11h4M7 15h4M17 12h1M17 16h1"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.4 4 5.6 4 9s-1.4 6.6-4 9M12 3c-2.6 2.4-4 5.6-4 9s1.4 6.6 4 9"/>'
 }
 
 const inner = computed(() => ICONS[props.name] || ICONS.device)

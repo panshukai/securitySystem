@@ -85,10 +85,10 @@ export const useAccessStore = defineStore('access', {
       if (this.step > 1) this.step -= 1
     },
     async issue() {
-      if (!this.selectedNos.length) return { ok: false, message: '请先选择授权人员' }
-      if (!this.doorIds.length) return { ok: false, message: '请先选择门禁资源' }
+      if (!this.selectedNos.length) return { ok: false, code: 'noPerson' }
+      if (!this.doorIds.length) return { ok: false, code: 'noDoor' }
       if (this.validity.type === 'custom' && this.validity.from > this.validity.to) {
-        return { ok: false, message: '有效期开始日期不能晚于结束日期' }
+        return { ok: false, code: 'date' }
       }
       const doors = this.selectedDoors.map((d) => d.name)
       const planName = this.selectedPlan?.name || ''
